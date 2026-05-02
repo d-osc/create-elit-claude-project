@@ -1,0 +1,8 @@
+.github/
+node_modules/
+scripts/
+test-target/
+*.tsbuildinfo
+tsconfig.json
+.gitignore
+.claude

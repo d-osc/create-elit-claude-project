@@ -1,0 +1,25 @@
+{
+  "name": "create-elit-claude-project",
+  "version": "1.0.0",
+  "description": "CLI to setup Claude agents, skills, memory, and plans in any repository",
+  "type": "module",
+  "bin": {
+    "create-elit-claude-project": "./bin/setup-claude.js"
+  },
+  "scripts": {
+    "build": "tsc scripts/setup-claude.ts --outDir dist --module nodenext --moduleResolution nodenext --target es2022 --declaration",
+    "setup:claude": "npx tsx scripts/setup-claude.ts",
+    "setup:claude:here": "npx tsx scripts/setup-claude.ts .",
+    "prepublishOnly": "npm run build"
+  },
+  "files": [
+    "bin",
+    "claude"
+  ],
+  "keywords": ["claude", "agents", "setup", "cli", "wapk", "elit"],
+  "license": "MIT",
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.5.0"
+  }
+}
