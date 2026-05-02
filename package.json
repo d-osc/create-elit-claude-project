@@ -7,10 +7,8 @@
     "create-elit-claude-project": "./bin/setup-claude.js"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json",
     "setup:claude": "npx tsx scripts/setup-claude.ts",
-    "setup:claude:here": "npx tsx scripts/setup-claude.ts .",
-    "prepublishOnly": "npm run build"
+    "setup:claude:here": "npx tsx scripts/setup-claude.ts ."
   },
   "files": [
     "bin",
@@ -25,10 +23,8 @@
     "elit"
   ],
   "license": "MIT",
-  "dependencies": {
-    "@types/node": "^25.6.0"
-  },
   "devDependencies": {
+    "@types/node": "^25.6.0",
     "tsx": "^4.0.0",
     "typescript": "^5.5.0"
   }
