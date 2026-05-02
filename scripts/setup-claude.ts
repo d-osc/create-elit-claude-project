@@ -59,8 +59,8 @@ function ensureDir(dir: string) {
 
 async function askConfirm(question: string): Promise<boolean> {
   const rl = createInterface({ input: process.stdin, output: process.stdout })
-  return new Promise((resolve) => {
-    rl.question(`${yellow}${question} [y/N]${reset} `, (answer) => {
+  return new Promise<boolean>((resolve) => {
+    rl.question(`${yellow}${question} [y/N]${reset} `, (answer: string) => {
       rl.close()
       resolve(answer.toLowerCase() === 'y' || answer.toLowerCase() === 'yes')
     })
@@ -118,7 +118,7 @@ async function setup(targetPath: string) {
 
   let skillsCopied = 0
   if (existsSync(skillsSrcDir)) {
-    const skillFiles = readdirSync(skillsSrcDir).filter((f) => f.endsWith('.md'))
+    const skillFiles = readdirSync(skillsSrcDir).filter((f: string) => f.endsWith('.md'))
     for (const file of skillFiles) {
       const src = join(skillsSrcDir, file)
       const dest = join(skillsDir, file)

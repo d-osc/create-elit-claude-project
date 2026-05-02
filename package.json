@@ -7,7 +7,7 @@
     "create-elit-claude-project": "./bin/setup-claude.js"
   },
   "scripts": {
-    "build": "tsc scripts/setup-claude.ts --outDir dist --module nodenext --moduleResolution nodenext --target es2022 --declaration",
+    "build": "tsc -p tsconfig.json",
     "setup:claude": "npx tsx scripts/setup-claude.ts",
     "setup:claude:here": "npx tsx scripts/setup-claude.ts .",
     "prepublishOnly": "npm run build"
