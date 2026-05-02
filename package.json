@@ -6,6 +6,10 @@
   "bin": {
     "create-elit-claude-project": "./bin/setup-claude.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/d-osc/create-elit-claude-project"
+  },
   "scripts": {
     "setup:claude": "npx tsx scripts/setup-claude.ts",
     "setup:claude:here": "npx tsx scripts/setup-claude.ts ."
