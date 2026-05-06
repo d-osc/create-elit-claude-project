@@ -84,9 +84,10 @@ async function setup(targetPath) {
     process.exit(1)
   }
 
+  let overwriteTemplates = true
   if (existsSync(claudeDir)) {
-    const yes = await askConfirm(`.claude/ already exists at ${target}. Overwrite agents?`)
-    if (!yes) { log('Cancelled.'); return }
+    overwriteTemplates = await askConfirm(`.claude/ already exists at ${target}. Overwrite existing agents and skills?`)
+    if (!overwriteTemplates) skip('Existing agents/skills will be kept; missing templates, memory, and plans will still be created')
   }
 
   // Agents
@@ -98,6 +99,7 @@ async function setup(targetPath) {
     const src = join(TEMPLATE_DIR, 'agents', `${agent}.md`)
     const dest = join(agentsDir, `${agent}.md`)
     if (!existsSync(src)) { skip(`${agent}.md — not found`); continue }
+    if (existsSync(dest) && !overwriteTemplates) { skip(`${agent}.md — exists, kept`); continue }
     writeFileSync(dest, readFileSync(src))
     ok(`${agent}.md`)
     agentsCopied++
@@ -111,7 +113,10 @@ async function setup(targetPath) {
   let skillsCopied = 0
   if (existsSync(skillsSrcDir)) {
     for (const file of readdirSync(skillsSrcDir).filter(f => f.endsWith('.md'))) {
-      writeFileSync(join(skillsDir, file), readFileSync(join(skillsSrcDir, file)))
+      const src = join(skillsSrcDir, file)
+      const dest = join(skillsDir, file)
+      if (existsSync(dest) && !overwriteTemplates) { skip(`${file} — exists, kept`); continue }
+      writeFileSync(dest, readFileSync(src))
       ok(file)
       skillsCopied++
     }

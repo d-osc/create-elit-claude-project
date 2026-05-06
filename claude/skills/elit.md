@@ -116,36 +116,132 @@ d.renderJson('app', jsonData);
 
 ### Routing (`elit/router`)
 
-```ts
-import { createRouter, createRouterView, routerLink } from 'elit/router';
+Docs-style split used by `docs/src/router.ts` and `docs/src/main.ts`:
 
-const options = {
-  mode: 'history' as const, // or 'hash'
+```ts
+// src/router.ts
+import { createRouter, createRouterView, type RouteParams } from 'elit';
+import { HomePage, AboutPage, UserPage } from './pages/index.ts';
+
+const routes = [
+  { path: '/', component: () => HomePage(router) },
+  { path: '/about', component: () => AboutPage(router) },
+  { path: '/users/:id', component: (params: RouteParams) => UserPage(router, params.id) },
+];
+
+export const router = createRouter({
+  mode: 'hash',
   base: '/',
-  routes: [
-    { path: '/', component: () => div('Home') },
-    { path: '/about', component: () => div('About') },
-    { path: '/user/:id', component: (params) => div(`User ${params.id}`) },
-    { path: '/admin', component: () => div('Admin'), beforeEnter: (to, from) => { /* guard */ } },
-  ],
-  notFound: () => div('404'),
+  routes,
+});
+
+export const RouterView = createRouterView(router, { mode: 'hash', routes });
+```
+
+```ts
+// src/main.ts
+import { dom, div, main, reactive } from 'elit';
+import { injectStyles } from './styles';
+import { Header, Footer } from './components';
+import { router, RouterView } from './router';
+import { setupSeo } from './seo';
+import './index.css';
+
+injectStyles();
+setupSeo(router);
+
+const App = () =>
+  div(
+    Header(router),
+    main(
+      reactive(router.currentRoute, () => RouterView())
+    ),
+    Footer()
+  );
+
+dom.render('#app', App());
+```
+
+Modular import variant:
+
+```ts
+import { div, main, nav } from 'elit/el';
+import { render } from 'elit/dom';
+import { reactive } from 'elit/state';
+import { createRouter, createRouterView, routerLink, type Route, type RouteParams } from 'elit/router';
+
+function HomePage() { return div('Home'); }
+function AboutPage() { return div('About'); }
+function UserPage(id: string) { return div(`User ${id}`); }
+function LoginPage() { return div('Login'); }
+function AdminPage() { return div('Admin'); }
+function NotFoundPage() { return div('404'); }
+const isLoggedIn = () => Boolean(localStorage.getItem('token'));
+
+const routes: Route[] = [
+  { path: '/', component: () => HomePage() },
+  { path: '/about', component: () => AboutPage() },
+  { path: '/user/:id', component: (params: RouteParams) => UserPage(params.id) },
+  {
+    path: '/admin',
+    component: () => AdminPage(),
+    beforeEnter: () => isLoggedIn() ? true : '/login',
+  },
+  { path: '/login', component: () => LoginPage() },
+];
+
+const routerOptions = {
+  mode: 'hash' as const, // default is 'history'; use 'hash' for static hosting
+  base: '/',
+  routes,
+  notFound: () => NotFoundPage(),
 };
 
-const router = createRouter(options);
-const RouterView = createRouterView(router, options);
+export const router = createRouter(routerOptions);
+export const RouterView = createRouterView(router, routerOptions);
+
+const App = () =>
+  div(
+    nav(
+      routerLink(router, { to: '/' }, 'Home'),
+      routerLink(router, { to: '/about' }, 'About'),
+    ),
+    main(
+      reactive(router.currentRoute, () => RouterView())
+    ),
+  );
+
+render('#app', App());
 
 // Navigation
 router.push('/about');
 router.replace('/about');
+router.navigate('/user/123');
 router.back();
+router.forward();
 router.go(-1);
 
 // Guards
-router.beforeEach((to, from) => { return true; }); // return false|string to block
+router.beforeEach((to, from) => {
+  if (to.path.startsWith('/admin') && !isLoggedIn()) return '/login';
+  return true; // return false to block, string to redirect, or void/true to continue
+});
 
 // Links
 routerLink(router, { to: '/' }, 'Home');
 ```
+
+Router rules:
+
+- Import from `elit/router` for modular code, or from `elit` when matching the Elit docs/templates.
+- `createRouterView(router, options)` returns a function. Call `RouterView()` inside `reactive(router.currentRoute, () => RouterView())`.
+- Keep the route list passed to `createRouter(...)` and `createRouterView(...)` in sync. `createRouter` needs `mode`, `base`, and `routes`; `createRouterView` mainly needs the same `routes` plus optional `notFound`.
+- Route components receive a merged params object: path params plus query values. Use `RouteParams` for `params`.
+- Passing `router` into page/header components is valid. Route callbacks can reference `router` even when `routes` is declared before `router`, because callbacks run after the router is initialized.
+- Guards are synchronous and return `false`, a redirect path string, `true`, or `void`. Do not use a `next()` callback.
+- `router.currentRoute` is a state object. Read the current path from `router.currentRoute.value.path`.
+- Use `history` mode only when the server falls back to the app shell for every client route. Use `hash` mode for static hosting or docs-style deployments.
+- Call `router.destroy()` when tearing down a mounted app to remove the `popstate` listener.
 
 ### Styling (`elit/style`)
 

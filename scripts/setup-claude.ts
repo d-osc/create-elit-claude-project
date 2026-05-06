@@ -81,12 +81,13 @@ async function setup(targetPath: string) {
     process.exit(1)
   }
 
+  let overwriteTemplates = true
+
   // Check if .claude already exists
   if (existsSync(claudeDir)) {
-    const confirmed = await askConfirm(`.claude/ already exists at ${target}. Overwrite agents?`)
-    if (!confirmed) {
-      log('Cancelled.')
-      return
+    overwriteTemplates = await askConfirm(`.claude/ already exists at ${target}. Overwrite existing agents and skills?`)
+    if (!overwriteTemplates) {
+      logSkip('Existing agents/skills will be kept; missing templates, memory, and plans will still be created')
     }
   }
 
@@ -102,6 +103,11 @@ async function setup(targetPath: string) {
 
     if (!existsSync(src)) {
       logSkip(`${agent}.md — template not found, skipping`)
+      continue
+    }
+
+    if (existsSync(dest) && !overwriteTemplates) {
+      logSkip(`${agent}.md — exists, kept`)
       continue
     }
 
@@ -122,6 +128,12 @@ async function setup(targetPath: string) {
     for (const file of skillFiles) {
       const src = join(skillsSrcDir, file)
       const dest = join(skillsDir, file)
+
+      if (existsSync(dest) && !overwriteTemplates) {
+        logSkip(`${file} — exists, kept`)
+        continue
+      }
+
       writeFileSync(dest, readFileSync(src))
       logSuccess(`${file}`)
       skillsCopied++

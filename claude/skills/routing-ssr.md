@@ -5,6 +5,12 @@ description: Elit framework client-side routing, SSR, and render context — cre
 
 # Routing / SSR (Elit)
 
+## Critical Rules
+
+- Elit UI code uses element factories from `elit/el`, not JSX. Translate any JSX-shaped examples into `div(...)`, `main(...)`, `nav(...)`, and other element factories before writing code.
+- `createRouterView(router, options)` returns a view function. Render it from `reactive(router.currentRoute, () => RouterView())` or `reactive(router.currentRoute, () => routerView())`.
+- Navigation guards do not use a `next()` callback. Return `false` to block, a string path to redirect, or `true`/`void` to continue.
+
 ## Imports
 
 ```typescript
@@ -155,25 +161,32 @@ const routes: Route[] = [
 ### createRouterView
 
 ```typescript
+import { div, main, nav } from 'elit/el';
+import { render } from 'elit/dom';
+import { reactive } from 'elit/state';
+
 // Signature
 function createRouterView(router: Router, options: RouterOptions): () => VNode;
 
-// Creates a reactive view that renders the matched route component
-const routerView = createRouterView(router, { routes: routes });
+// Creates a view function that renders the matched route component.
+// Call it from reactive(router.currentRoute, ...) so route changes re-render.
+const routerView = createRouterView(router, { routes });
 
 // Use in app layout
-const App = () => (
-    <div class="app">
-        <nav class="sidebar">
-            {routerLink(router, { to: '/' }, 'Home')}
-            {routerLink(router, { to: '/users' }, 'Users')}
-            {routerLink(router, { to: '/settings' }, 'Settings')}
-        </nav>
-        <main class="content">
-            {routerView()}
-        </main>
-    </div>
-);
+const App = () =>
+    div(
+        { class: 'app' },
+        nav(
+            { class: 'sidebar' },
+            routerLink(router, { to: '/' }, 'Home'),
+            routerLink(router, { to: '/users' }, 'Users'),
+            routerLink(router, { to: '/settings' }, 'Settings'),
+        ),
+        main(
+            { class: 'content' },
+            reactive(router.currentRoute, () => routerView()),
+        ),
+    );
 
 // Render app
 render('#app', App());
@@ -182,30 +195,30 @@ render('#app', App());
 ### Reactive Router View
 
 ```typescript
-// RouterView is reactive — it re-renders when currentRoute changes
-// No extra wiring needed, just call routerView() in your layout
-import { render, reactive } from 'elit/state';
+// RouterView is a view function, not a standalone reactive node.
+// Wrap routerView() in reactive(router.currentRoute, ...) inside the layout.
+import { div, header, h1, main, nav } from 'elit/el';
+import { render } from 'elit/dom';
+import { reactive } from 'elit/state';
 
 const router = createRouter({ routes });
 const routerView = createRouterView(router, { routes });
 
-// The routerView() reads router.currentRoute internally
-// When navigate() is called, currentRoute updates, view re-renders
+// Navigation updates router.currentRoute. reactive(...) re-renders the view.
 
-const App = () => (
-    <div>
-        <header>
-            <h1>My App</h1>
-            <nav>
-                {routerLink(router, { to: '/' }, 'Home')}
-                {routerLink(router, { to: '/about' }, 'About')}
-            </nav>
-        </header>
-        <main>
-            {routerView()}
-        </main>
-    </div>
-);
+const App = () =>
+    div(
+        header(
+            h1('My App'),
+            nav(
+                routerLink(router, { to: '/' }, 'Home'),
+                routerLink(router, { to: '/about' }, 'About'),
+            ),
+        ),
+        main(
+            reactive(router.currentRoute, () => routerView()),
+        ),
+    );
 
 render('#app', App());
 ```
